@@ -1,0 +1,819 @@
+% !TeX program = xelatex
+% !TeX encoding = UTF-8
+\documentclass[aspectratio=169, 10pt]{beamer}
+
+\usetheme{AICL} 
+
+% 발표 정보
+\title{Weighted Sum-Rate Maximization \\
+using Weighted MMSE for MIMO-BC Beamforming Design}
+\author{Myoungjin Oh}
+\institute{School of Electrical Engineering, Korea University}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+    \vspace*{-47pt}
+\end{frame}
+
+
+% ---------------------------------------------------------------------------- %
+%                                      toc                                     %
+% ---------------------------------------------------------------------------- %
+\begin{frame}{Table of Contents}
+    \setbeamertemplate{section in toc}[]
+    \tableofcontents
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                            Section 1: Introduction                           %
+% ---------------------------------------------------------------------------- %
+\section{I. Introduction}
+\OnlyTitle
+\begin{frame}{\insertsectionhead}
+    \begin{itemize}
+        \setlength{\itemsep}{1.5em}
+        \item For MIMO-BC, non-linear techniques outperform linear ones.
+              \begin{itemize}
+                  \item However, they are complex for voth Tx and Rx.
+              \end{itemize}
+
+        \item Focus on Tx Beamforming design to \textbf{Maximize Weithted Sum-Rate (WSR)}.
+              \begin{itemize}
+                  \item WSR maximization is non-convex and non-trivial.
+              \end{itemize}
+        \item Estabilish a relationship between WSR maximization and \\
+              \textbf{Weighted Minimum Mean Square Error (WMMSE)} minimization.
+        \item Propose an iterative algorithm to solve WSR maximization via WMMSE minimization.
+    \end{itemize}
+\end{frame}
+
+
+% ---------------------------------------------------------------------------- %
+%                            Section 2: System Model                           %
+% ---------------------------------------------------------------------------- %
+\section{II. System Model and Objective}
+
+\begin{frame}{System Model}
+    General narrowband point-to-multipoint MIMO system.
+
+    \begin{itemize}
+        \item $P$ transmit antennas
+        \item $K$ users each with $Q$ receive antennas
+        \item System has total $QK$ receive antennas
+        \item MIMO Channel between Tx and user $k$ : $\mathbf{H}_k \in \mathbb{C}^{[Q \times P]}$
+    \end{itemize}
+
+    \begin{equation}
+        \mathbf{y}_k(n) = \mathbf{H}_k \mathbf{x}(n) + \mathbf{v}_k(n), \tag{1}
+    \end{equation}
+
+    Where
+    \begin{itemize}
+        \item $\mathbf{x}(n) \in \mathbb{C}^{[1\times P]}$ : complex transmitted vector
+        \item $\mathbf{v}_k(n) \in \mathbb{C}^{[Q\times 1]}$
+              : noise vector containing circularly symmetric white Gaussian noise
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{System Model}
+    $\mathbf{x}(n)$ : linearly filtered version of the input data vectors
+    $\mathbf{d}_1(n), \cdots , \mathbf{d}_K(n) \in \mathbb{C}^{[Q\times 1]}$
+    \begin{equation}
+        \mathbf{x}(n) = \sum_{k=1}^K \mathbf{B}_k \mathbf{d}_k(n). \tag{2}
+    \end{equation}
+
+    Matricies $\mathbf{B}_1, \cdots , \mathbf{B}_K \in \mathbb{C}^{[P\times Q]}$
+    : transmit filters(Beamformers). Assumed
+    \begin{itemize}
+        \item each user has $Q$ parallel data streams.
+        \item each user receives $Q$ independent streams such that
+              $\mathbb{E}[ \mathbf{d}_k(n)\mathbf{d}_k(n)^\mathrm{H}] = \mathbf{I}_Q$
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}[label=main-power_constraint]{System Model}
+    Transmit power constraint
+    \begin{equation}
+        \frac{1}{N} \sum_{n=1}^N \mathbf{x}^\mathrm{H}(n) \mathbf{x}(n) \le E_{tx} \tag{3}
+    \end{equation}
+
+    If $N$ is large enough, then
+    \begin{equation}
+        \frac{1}{N} \sum_{n=1}^N \mathbf{x}^\mathrm{H}(n) \mathbf{x}(n) \rightarrow
+        \mathbb{E}[\mathbf{x}^\mathrm{H}(n)\mathbf{x}(n)] =
+        \sum_k \mathrm{Tr}(\mathbf{B}_k\mathbf{B}_k^\mathrm{H}) \tag{3a}
+    \end{equation}
+    \begin{flushright}
+        \hyperlink{app-power_constraint}{\beamergotobutton{Derivation}}
+    \end{flushright}
+
+\end{frame}
+
+\begin{frame}{A. Main Objective}
+    To find $\mathbf{B}_1, \cdots , \mathbf{B}_K$ that maximizes WSR under power constraint (3):
+    \begin{align}
+        [\mathbf{B}_1^{\mathrm{WSR}}, \cdots, \mathbf{B}_K^{\mathrm{WSR}}]
+         & = \underset{\mathbf{B}_1, \cdots, \mathbf{B}_K}{\operatorname{arg\,min}}
+        \sum_k -u_{R_k} R_k \tag{4}
+        \\& \quad \mathrm{s.t.} \ \sum_{k=1}^K \mathrm{Tr}(\mathbf{B}_k \mathbf{B}_k^\mathrm{H}) = E_{tx}, \notag
+    \end{align}
+
+    Where
+    \begin{itemize}
+        \item $u_{R_k} \ge 0$ : weight for user $k$
+        \item $R_k$ : achievable rate for user $k$
+              \begin{equation}
+                  R_k=\log \operatorname{det}\left(\mathbf{I}_k+\mathbf{B}_k^{\mathrm{H}} \mathbf{H}_k^{\mathrm{H}} \mathbf{R}_{\tilde{v}_k \tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k\right),
+                  \tag{5}
+              \end{equation}
+              \begin{equation}
+                  \mathbf{R}_{\bar{v}_k \bar{v}_k}=\mathbf{I}_k+\sum_{i=1, i \neq k}^K \mathbf{H}_k \mathbf{B}_i \mathbf{B}_i^{\mathrm{H}} \mathbf{H}_k^{\mathrm{H}}
+                  \tag{6}
+              \end{equation}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[label=main-mmse_rx_filter]{A. Main Objective}
+    The MMSE recieve filter at user $k$ is given by
+    \begin{align}
+        \mathbf{A}_k^{\mathrm{MMSE}}
+         & =\underset{\mathbf{A}_k}{\arg \min }\;
+        \mathbb{E}\left[\left\|\mathbf{A}_k \mathbf{y}_k-\mathbf{d}_k\right\|^2\right] \notag                                                                                                           \\
+         & =\mathbf{B}_k^{\mathrm{H}} \mathbf{H}_k^{\mathrm{H}}\left(\mathbf{H}_k \mathbf{B}_k \mathbf{B}_k^{\mathrm{H}} \mathbf{H}_k^{\mathrm{H}}+\mathbf{R}_{\bar{v}_k \bar{v}_k}\right)^{-1} \tag{7}
+    \end{align}
+    \begin{flushright}
+        \hyperlink{app-mmse_rx_filter_7}{\beamergotobutton{Derivation}}
+    \end{flushright}
+
+    MSE Matrix for user $k$ given at the MMSE-recieve filter
+    \begin{align}
+        \mathbf{E}_k & =\mathbb{E}\left[\left(\mathbf{A}_k^{\mathrm{MMSE}} \mathbf{y}_k-\mathbf{d}_k\right)\left(\mathbf{A}_k^{\mathrm{MMSE}} \mathbf{y}_k-\mathbf{d}_k\right)^{\mathrm{H}}\right] \notag \\
+                     & =\left(\mathbf{I}_k+\mathbf{B}_k^{\mathrm{H}} \mathbf{H}_k^{\mathrm{H}} \mathbf{R}_{\tilde{v}_k \tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k\right)^{-1}  \tag{8}
+    \end{align}
+
+    \begin{flushright}
+        \hyperlink{app-mmse_rx_filter_8}{\beamergotobutton{Derivation}}
+    \end{flushright}
+\end{frame}
+
+\begin{frame}{A. Main Objective}
+    Given (5) and (8), the rate for user $k$ can be expressed as
+    \begin{equation}
+        R_k = -\log \operatorname{det}(\mathbf{E}_k^{-1}) \tag{9}
+    \end{equation}
+\end{frame}
+
+
+% ---------------------------------------------------------------------------- %
+%              Section 3: Gradient Expressions and KKT conditions              %
+% ---------------------------------------------------------------------------- %
+\section{III. Gradient Expressions \& KKT Conditions}
+
+\begin{frame}{A. Gradient of WSR Maximization}
+    Formulate Lagrangian for WSR maximization problem (4):
+    \begin{align}
+        \mathcal{f}(\mathbf{B}_1, \dots, \mathbf{B}_K, \lambda)
+         & = \underbrace{ \sum_{k=1}^{K} -u_{R_k} R_k }_{\mathrm{Objective:\ Minimize\ Negative\ WSR}} \notag \\
+         & \quad + \lambda \underbrace{ \left(
+            \sum_{k=1}^{K} \mathrm{Tr}(\mathbf{B}_k \mathbf{B}_k^\mathrm{H}) - E_{tx}
+            \right) }_{\mathrm{Constraint:\ Total\ Power\ Limit}}
+        \tag{12}
+    \end{align}
+
+    Define $\nabla_{\mathbf{B}_k} f = \frac{\partial f}{\partial \mathbf{B}_k^*}$
+
+\end{frame}
+
+\begin{frame}[label=main-wsr_Ri]{A. Gradient of WSR Maximization}
+    \begin{align*}
+        \nabla_{\mathbf{B}_k} f
+         & = \nabla_{\mathbf{B}_k} \left( \sum_{j=1}^{K} -u_j R_j + \lambda \left( \sum_{j=1}^{K} \mathrm{Tr}(\mathbf{B}_j \mathbf{B}_j^\mathrm{H}) - E_{tx} \right) \right)                                          \\
+         & = -u_k \underbrace{ \nabla_{\mathbf{B}_k} R_k }_{\textrm{(i)\ Self-Rate}} - \sum_{i \neq k} u_i \underbrace{ \nabla_{\mathbf{B}_k} R_i }_{\mathrm{(ii)\ Interference}} + \lambda \mathbf{B}_k = \mathbf{0}
+    \end{align*}
+    Compute $\nabla_{\mathbf{B}_k} R_k$
+    \begin{align*}
+        \textrm{Definition:} \quad
+         & R_k = \log \det \left(\mathbf{I} + \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k\right)\notag \\
+        \textrm{Gradient:} \quad
+         & \nabla_{\mathbf{B}_k} R_k =
+        \mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k \underbrace{
+        (\mathbf{I} + \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k)^{-1} }
+        _{\mathbf{E}_k \textrm{ (MMSE Matrix)}} \notag                                                                                                                        \\
+        \therefore \quad
+         & \nabla_{\mathbf{B}_k} R_k = \mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k \mathbf{E}_k \quad
+        \tag{14}
+    \end{align*}
+    \begin{flushright}
+        \hyperlink{app-wsr_Ri}{\beamergotobutton{Derivation}}
+    \end{flushright}
+\end{frame}
+
+\begin{frame}[label=main-wsr_Ri2]{A. Gradient of WSR Maximization}
+    Compute $\nabla_{\mathbf{B}_k} R_i$ for $i \neq k$
+    \begin{equation}
+        \nabla_{\mathbf{B}_{k}}R_{i}=
+        -\mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i
+        \mathbf{B}_i^\mathrm{H}
+        \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_k
+        \tag{17}
+    \end{equation}
+
+    \begin{flushright}
+        \hyperlink{app-wsr_Ri2}{\beamergotobutton{Derivation}}
+    \end{flushright}
+
+    Combine (14) and (17), we obtain the gradient of WSR maximization problem (10):
+    \begin{align}
+        \nabla_{\mathbf{B}_k} f
+         & = -u_k \underbrace{ \nabla_{\mathbf{B}_k} R_k }_{\textrm{(i) Self-Rate}} - \sum_{i \neq k} u_i \underbrace{ \nabla_{\mathbf{B}_k} R_i }_{\textrm{(ii) Interference}} + \lambda \mathbf{B}_k \notag \\
+         & = -u_k\mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k \mathbf{E}_k
+        + \left(
+        \sum_{i=1,i\ne k}^K u_i\mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i
+        \mathbf{B}_i^\mathrm{H}
+        \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i
+        \right)\mathbf{B}_k + \lambda \mathbf{B}_k \tag{10}
+    \end{align}
+
+
+\end{frame}
+
+\begin{frame}{B. Gradient of WMMSE Minimization}
+    The WMMSE minimization problem is given by
+    \begin{align}
+        [\mathbf{B}_1^{\mathrm{MMSE}}, \cdots, \mathbf{B}_K^{\mathrm{MMSE}}]
+         & = \underset{\mathbf{B}_1, \cdots, \mathbf{B}_K}{\operatorname{arg\,min}} \sum_k \mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right) \tag{18} \\
+         & \quad \textrm{s.t.} \ \sum_{k=1}^K \mathrm{Tr}\left(\mathbf{B}_k \mathbf{B}_k^\mathrm{H}\right) = E_{tx} \notag
+    \end{align}
+
+    $\mathbf{W}_k \in \mathbb{C}^{\left[ Q_k \times Q_k \right]}$ : constant weight matrix associated with user $k$.
+
+    Lagrangian leads:
+
+    \begin{equation}
+        g\left(\mathbf{B}_1\cdots\mathbf{B}_K\right) = \sum_k \mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right)
+        + \lambda \left(
+        \sum_k \mathrm{Tr}\left(\mathbf{B}_k \mathbf{B}_k^\mathrm{H}\right) - E_{tx}
+        \right) \tag{19}
+    \end{equation}
+
+\end{frame}
+
+\begin{frame}[label=main-wmmse-grad]{B. Gradient of WMMSE Minimization}
+    Compute $\nabla_{\mathbf{B}_k} g$
+    \begin{enumerate}
+        \item Compute $\nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right)$
+              \begin{equation}
+                  \nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right)  =
+                  -\mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k \mathbf{E}_k\mathbf{W}_k \mathbf{E}_k
+                  \tag{20}
+              \end{equation}
+
+              \begin{flushright}
+                  \hyperlink{app-wmmse-grad1}{\beamergotobutton{Derivation}}
+              \end{flushright}
+        \item Compute $\nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i\right)$ for $i \neq k$
+              \begin{equation}
+                  \nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i\right) =
+                  \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i\mathbf{W}_i\mathbf{E}_i
+                  \mathbf{B}_i^\mathrm{H}
+                  \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_k
+                  \tag{21}
+              \end{equation}
+
+              \begin{flushright}
+                  \hyperlink{app-wmmse-grad2}{\beamergotobutton{Derivation}}
+              \end{flushright}
+    \end{enumerate}
+\end{frame}
+\begin{frame}{B. Gradient of WMMSE Minimization}
+    \begin{enumerate}
+        \setcounter{enumi}{2}
+        \item Combining (20) and (21), we obtain the WMMSE gradient:
+              \vspace{2ex}
+              \begin{align}
+                  \nabla_{\mathbf{B}_k} g
+                   & =
+                  \nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right)
+                  + \left(
+                  \sum_{i=1,i\ne k}^K
+                  \nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i\right)\right) + \lambda \mathbf{B}_k \notag                            \\
+                   & = -\mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k \mathbf{E}_k\mathbf{W}_k \mathbf{E}_k
+                  \notag                                                                                                                                 \\& \quad
+                  + \left(
+                  \sum_{i=1,i\ne k}^K \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i\mathbf{W}_i\mathbf{E}_i
+                  \mathbf{B}_i^\mathrm{H}
+                  \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i
+                  \right)\mathbf{B}_k
+                  + \lambda \mathbf{B}_k \tag{11}
+              \end{align}
+    \end{enumerate}
+    Notice also
+    \begin{equation*}
+        \nabla_\lambda f = \nabla_\lambda g = \sum_k \mathrm{Tr}\left(\mathbf{B}_k \mathbf{B}_k^\mathrm{H}\right) - E_{tx}
+    \end{equation*}
+\end{frame}
+
+\begin{frame}{C. Compare $\nabla_{\mathbf{B}_k} \text{WSR}$ and $\nabla_{\mathbf{B}_k} \text{WMMSE}$}
+
+    \textbf{Key Insight:} The two problems are closely related through the MSE weights.
+
+    \begin{itemize}
+        \item If we select the MSE weights as:
+              \begin{equation*}
+                  \mathbf{W}_k = u_k \mathbf{E}_k^{-1}
+              \end{equation*}
+
+        \item Then, the gradients become identical:
+              \begin{equation*}
+                  \nabla_{\mathbf{B}_k} \text{WSR} = \nabla_{\mathbf{B}_k} \text{WMMSE}
+              \end{equation*}
+    \end{itemize}
+
+    \vspace{0.3cm}
+
+    \begin{alertblock}{Implication}
+        \centering
+        A stationary point of the WSR problem satisfies the \\
+        \textbf{KKT conditions} of the WMMSE problem.
+        \\ $\Rightarrow$ We can solve WSR by iteratively solving WMMSE.
+    \end{alertblock}
+
+\end{frame}
+
+
+% --- Section 4: Alternating Optimization ---
+\section{IV. Alternating Optimization}
+
+\begin{frame}{Proposed Algorithm: WSRBF-WMMSE}
+
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                             section 5: Simulation                            %
+% ---------------------------------------------------------------------------- %
+\section{V. Simulation}
+% \OnlyTitle
+\begin{frame}{Simulation Setup}
+    \begin{enumerate}
+        \item Proposed a conflict-aware traffic steering xApp using MADRL.
+        \item Defined a joint reward function for throughput and load balancing.
+        \item Validated performance via NS-3 simulation result.
+    \end{enumerate}
+
+\end{frame}
+
+\begin{frame}{Result}
+    Simulation setup based on \textbf{NS-3} with O-RAN extension.
+
+    \vspace{0.3cm}
+    \centering
+    % 이미지 2개를 나란히 배치하는 예시
+    \begin{columns}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=4cm]{example-image-c}
+            \\ \small (a) Average Throughput
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \centering
+            \includegraphics[width=\textwidth, height=4cm]{example-image-c}
+            \\ \small (b) Handover Frequency
+        \end{column}
+    \end{columns}
+
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item Proposed method achieves \textbf{24\% gain} over heuristic baseline.
+        \item Handover frequency is reduced by stabilizing the policy.
+    \end{itemize}
+\end{frame}
+
+\section{}
+\begin{frame}{}
+    \centering
+    \Large \textbf{\textcolor{ku_crimson}{Thank You}} \\
+    \vspace{0.5cm}
+    \small \textcolor{gray}{Q \& A}
+\end{frame}
+
+% ---------------------------------------------------------------------------- %
+%                                   Appendix                                   %
+% ---------------------------------------------------------------------------- %
+\appendix
+
+\begin{frame}[label=app-power_constraint]{Derivation of Eq (3a)}
+
+
+    \begin{equation*}
+        \mathbf{x} = \sum_{k=1}^K \mathbf{B}_k\mathbf{d}_k,\quad
+        \mathbf{x}^\mathrm{H}\mathbf{x} =
+        \left(\sum_{j=1}^K \mathbf{d}_j^\mathrm{H} \mathbf{B}_j^\mathrm{H}\right)
+        \left(\sum_{k=1}^K \mathbf{B}_k\mathbf{d}_k\right)
+        = \sum_{j=1}^K \sum_{k=1}^K \mathbf{d}_j^\mathrm{H} \mathbf{B}_j^\mathrm{H}\mathbf{B}_k\mathbf{d}_k
+    \end{equation*}
+
+    As $\mathbf{d}_k^\mathrm{H} \mathbf{B}_k^\mathrm{H}\mathbf{B}_k\mathbf{d}_k$ is scalar, $\mathrm{Tr}$ can be applied:
+    \begin{equation*}
+        \mathbf{d}_j^\mathrm{H} \mathbf{B}_j^\mathrm{H}\mathbf{B}_k\mathbf{d}_k
+        = \mathrm{Tr}( \mathbf{B}_k^\mathrm{H}\mathbf{B}_k\mathbf{d}_k\mathbf{d}_k^\mathrm{H}),\quad
+        \mathbb{E}[\mathbf{d}_j\mathbf{d}_k^\mathrm{H}] = \begin{cases}
+            \mathbf{I} & \mathrm{if }\, j = k    \\
+            0          & \mathrm{if }\, j \neq k
+        \end{cases}
+    \end{equation*}
+
+    Therefore,
+
+    \begin{equation*}
+        \mathbb{E}[\mathbf{x}^\mathrm{H}\mathbf{x}] =
+        \sum_{j=1}^K \sum_{k=1}^K \mathrm{Tr}( \mathbf{B}_j^\mathrm{H}\mathbf{B}_k
+        \mathbb{E}[\mathbf{d}_k\mathbf{d}_j^\mathrm{H}])
+        = \sum_{k=1}^K\mathrm{Tr}(\mathbf{B}_k\mathbf{B}_k^\mathrm{H})
+    \end{equation*}
+    % [복귀 버튼] 
+    \begin{flushright}
+        \hyperlink{main-power_constraint}{\beamerreturnbutton{Return}}
+    \end{flushright}
+\end{frame}
+
+\begin{frame}[label=app-mmse_rx_filter_7]{Derivation of Eq (7)}
+    \begin{equation*}
+        \begin{aligned}
+            J = \mathbb{E}\left[\left\|\mathbf{A}_k \mathbf{y}_k-\mathbf{d}_k\right\|^2\right] & =\mathbb{E}\left[\operatorname{Tr}\left(\left(\mathbf{A}_k \mathbf{y}_k-\mathbf{d}_k\right)\left(\mathbf{A}_k \mathbf{y}_k-\mathbf{d}_k\right)^\mathrm{H}\right)\right]                       \\
+                                                                                               & =\mathbb{E}\left[\operatorname{Tr}\left(\left(\mathbf{A}_k \mathbf{y}_k-\mathbf{d}_k\right)\left(\mathbf{y}_k^\mathrm{H} \mathbf{A}_k^\mathrm{H}-\mathbf{d}_k^\mathrm{H}\right)\right)\right]
+        \end{aligned}
+    \end{equation*}
+
+    Let Corellation $\mathbf{R}_{yy} = \mathbb{E}\left[\mathbf{y}_k \mathbf{y}_k^\mathrm{H}\right]$,
+    $\mathbf{R}_{dy} = \mathbb{E}\left[\mathbf{d}_k \mathbf{y}_k^\mathrm{H}\right]$,
+    $\mathbf{R}_{yd} = \mathbb{E}\left[\mathbf{y}_k \mathbf{d}_k^\mathrm{H}\right] = \mathbf{R}_{dy}^\mathrm{H}$
+
+    \begin{equation*}
+        J =\operatorname{Tr}\left(
+        \mathbf{A}_k \mathbf{R}_{yy} \mathbf{A}_k^\mathrm{H}
+        -\mathbf{A}_k\mathbf{R}_{yd}
+        -\mathbf{R}_{dy}\mathbf{A}_k^\mathrm{H}
+        +\mathbb{E}\left[\mathbf{d}_k \mathbf{d}_k^\mathrm{H}\right]
+        \right)
+    \end{equation*}
+    Using matrix calculus,
+    \begin{columns}
+        \begin{column}{0.3\textwidth}
+            \begin{itemize}
+                \item $\frac{\partial}{\partial \mathbf{X}^*} \operatorname{Tr}\left(\mathbf{X R} \mathbf{X}^H\right)=\mathbf{X} \mathbf{R}$
+                \item $\frac{\partial}{\partial \mathbf{X}^*} \cdot \operatorname{Tr}\left(\mathbf{A} \mathbf{X}^H\right)=\mathbf{A}$
+            \end{itemize}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{align*}
+                \frac{\partial J}{\partial \mathbf{A}_k^\ast} = \mathbf{A}_k\mathbf{R}_{yy}
+                - \mathbf{R}_{dy} = 0 \\
+                \mathbf{A}_k^\mathrm{MMSE} = \mathbf{R}_{dy}\mathbf{R}_{yy}^{-1}
+            \end{align*}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Derivation of Eq (7)}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \begin{align*}
+                \mathbf{R}_{dy} &
+                =  \mathbb{E}\left[\mathbf{d}_k \mathbf{y}_k^\mathrm{H}\right]                 \\
+                                & = \mathbb{E}\left[
+                    \mathbf{d}_k \left(
+                    \mathbf{H}_k \mathbf{B}_k \mathbf{d}_k  + \tilde{\mathbf{v}_k}
+                    \right)^\mathrm{H}
+                \right]                                                                        \\
+                                & = \mathbb{E}\left[
+                    \mathbf{d}_k
+                    \mathbf{d}_k^\mathrm{H} \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H}
+                    \right] = \mathbb{E}\left[
+                    \mathbf{d}_k
+                \mathbf{d}_k^\mathrm{H} \right]\mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H} \\
+                                & = \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H}
+            \end{align*}
+
+        \end{column}
+        \begin{column}{0.5\textwidth}
+            \begin{align*}
+                \mathbf{R}_{yy} &
+                =  \mathbb{E}\left[\mathbf{y}_k \mathbf{y}_k^\mathrm{H}\right] \\
+                                & = \mathbb{E}\left[
+                    \left(\mathbf{H}_k \mathbf{B}_k \mathbf{d}_k  + \tilde{\mathbf{v}_k}\right)
+                    \left(
+                    \mathbf{H}_k \mathbf{B}_k \mathbf{d}_k  + \tilde{\mathbf{v}_k}
+                    \right)^\mathrm{H}
+                \right]                                                        \\
+                                & = \mathbf{B}_k \mathbf{H}_k
+                \mathbb{E}\left[
+                    \mathbf{d}_k \mathbf{d}_k^\mathrm{H} \right]
+                \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H} +
+                \mathbb{E}\left[
+                \tilde{\mathbf{v}_k} \tilde{\mathbf{v}_k}^\mathrm{H} \right]   \\
+                                & = \mathbf{B}_k \mathbf{H}_k
+                \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H} +
+                \mathbf{R}_{\tilde{v_k}\tilde{v_k}}
+            \end{align*}
+        \end{column}
+    \end{columns}
+
+    \vspace{2ex}
+
+    Therefore,
+    \begin{equation*}
+        \mathbf{A}_k^\mathrm{MMSE} =
+        \underbrace{\mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H}}_{\mathbf{R}_{d y}} \underbrace{\left(\mathbf{H}_k \mathbf{B}_k \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H}+\mathbf{R}_{\tilde{v}_k \tilde{v}_k}\right)^{-1}}_{\mathbf{R}_{y y}^{-1}}
+    \end{equation*}
+    % [복귀 버튼] 
+    \begin{flushright}
+        \hyperlink{main-mmse_rx_filter}{\beamerreturnbutton{Return}}
+    \end{flushright}
+
+\end{frame}
+
+\begin{frame}[label=app-mmse_rx_filter_8]{Derivation of Eq (8)}
+    \vspace{-2ex}
+    \begin{align*}
+        \mathbf{E}_k
+         & = \mathbb{E}\left[\left(\mathbf{A}_k^{\mathrm{MMSE}} \mathbf{y}_k-\mathbf{d}_k\right)\left(\mathbf{A}_k^{\mathrm{MMSE}} \mathbf{y}_k-\mathbf{d}_k\right)^{\mathrm{H}}\right]                                             \\
+         & = \mathbf{A}_k \mathbf{R}_{yy} \mathbf{A}_k^\mathrm{H}-\mathbf{A}_k\mathbf{R}_{yd} -\mathbf{R}_{dy}\mathbf{A}_k^\mathrm{H}+\mathbf{R}_{dd}                                                                               \\
+         & = (\mathbf{R}_{dy}\mathbf{R}_{yy}^{-1}) \mathbf{R}_{yy} \mathbf{A}_k^\mathrm{H}-(\mathbf{R}_{dy}\mathbf{R}_{yy}^{-1})\mathbf{R}_{yd} -\mathbf{R}_{dy}\mathbf{A}_k^\mathrm{H} +\mathbf{R}_{dd}                            \\
+         & = \mathbf{R}_{dd}-\mathbf{R}_{dy}\mathbf{R}_{yy}^{-1}\mathbf{R}_{yd}                                                                                                                                                     \\
+         & = \mathbf{I} - \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H}\left(\mathbf{B}_k \mathbf{H}_k \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H} + \mathbf{R}_{\tilde{v}_k\tilde{v}_k}\right)^{-1}\mathbf{H}_k \mathbf{B}_k
+    \end{align*}
+
+    Apply Woodbury matrix identity $\mathbf{I}-\mathbf{U}(\mathbf{C}+\mathbf{V} \mathbf{U})^{-1} \mathbf{V}=\left(\mathbf{I}+\mathbf{U C}^{-1} \mathbf{V}\right)^{-1}$, \\
+    Let $\mathbf{U} = \mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H}$, $\;\;\;\mathbf{V} = \mathbf{H}_k \mathbf{B}_k$, $\;\;\;\mathbf{C} = \mathbf{R}_{\tilde{v}_k \tilde{v}_k}$
+
+    \begin{align*}
+        \mathbf{E}_k & =\left(\mathbf{I}+\left(\mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H} \right)\left(\mathbf{R}_{\bar{v}_k \bar{v}_k}\right)^{-1}\left(\mathbf{H}_k \mathbf{B}_k\right)\right)^{-1} \\
+                     & =\left(\mathbf{I}+\mathbf{B}_k^\mathrm{H} \mathbf{H}_k^\mathrm{H}  \mathbf{R}_{\bar{v}_k \bar{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k\right)^{-1}
+    \end{align*}
+
+    % [복귀 버튼] 
+    \begin{flushright}
+        \hyperlink{main-mmse_rx_filter}{\beamerreturnbutton{Return}}
+    \end{flushright}
+    \vspace{-3ex}
+\end{frame}
+
+\begin{frame}[label=app-wsr_Ri]{Derivation of Eq (14)}
+
+    \begin{columns}
+        \begin{column}{0.4\paperwidth}
+            \begin{align*}
+                \textrm{Target: } R_k = \log \det (\mathbf{K})                                                             \\
+                \textrm{Substitution: } \mathbf{K} = \mathbf{I} + \mathbf{B}_k^\mathrm{H} \mathbf{C} \mathbf{B}_k          \\
+                \textrm{Constant Matrix: } \mathbf{C} = \mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k}^{-1} \mathbf{H}_k \\
+                \textrm{MMSE Matrix: } \mathbf{E}_k = \mathbf{K}^{-1}
+            \end{align*}
+        \end{column}
+        \begin{column}{0.6\paperwidth}
+            \begin{equation*}
+                {\frac{\partial\log\operatorname{det}\mathbf{K}}{\partial x}}=\operatorname{Tr}(\mathbf{K}^{-1}{\frac{\partial\mathbf{K}}{\partial x}})
+            \end{equation*}
+            \begin{equation*}
+                \frac{\partial R_k}{\partial [\mathbf{B}_k^*]_{nm}} = \mathrm{Tr}\left( \mathbf{K}^{-1} \frac{\partial \mathbf{K}}{\partial [\mathbf{B}_k^*]_{nm}} \right) = \mathrm{Tr}\left( \mathbf{E}_k \frac{\partial \mathbf{K}}{\partial [\mathbf{B}_k^*]_{nm}} \right)
+            \end{equation*}
+            \begin{equation*}
+                \frac{\partial \mathbf{K}}{\partial [\mathbf{B}_k^*]_{nm}} = \mathbf{e}_m \mathbf{e}_n^\mathrm{T} \mathbf{C} \mathbf{B}_k
+            \end{equation*}
+            \begin{align*}
+                \frac{\partial R_k}{\partial [\mathbf{B}_k^*]_{nm}}
+                 & = \mathrm{Tr}\left( \mathbf{E}_k \mathbf{e}_m \mathbf{e}_n^\mathrm{T} \mathbf{C} \mathbf{B}_k \right) \\
+                 & = \mathrm{Tr}\left( \mathbf{e}_n^\mathrm{T} \mathbf{C} \mathbf{B}_k \mathbf{E}_k \mathbf{e}_m \right) \\
+                 & = [\mathbf{C} \mathbf{B}_k \mathbf{E}_k]_{nm}
+            \end{align*}
+        \end{column}
+    \end{columns}
+
+    \begin{equation*}
+        \nabla_{\mathbf{B}_k} R_k = \mathbf{C} \mathbf{B}_k \mathbf{E}_k = \mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k \mathbf{E}_k
+    \end{equation*}
+
+
+    % [복귀 버튼] 
+    \begin{flushright}
+        \hyperlink{main-wsr_Ri}{\beamerreturnbutton{Return}}
+    \end{flushright}
+
+    \vspace{-9ex}
+\end{frame}
+
+\begin{frame}[label=app-wsr_Ri2]{Derivation of Eq (17)}
+
+    \begin{columns}
+        \begin{column}{0.4\paperwidth}
+            \begin{align*}
+                R_i = \log \det \left(\mathbf{I} + \mathbf{B}_i^\mathrm{H} \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i\right) \\
+                \mathbf{R}_{\tilde{v}_i \tilde{v}_i}=\mathbf{I}_i+\sum_{k=1, k \neq i}^K \mathbf{H}_i \mathbf{B}_k \mathbf{B}_k^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}}
+            \end{align*}
+        \end{column}
+        \begin{column}{0.6\paperwidth}
+            \begin{align*}
+                \mathbf{S} = \mathbf{X}+\mathbf{L}\mathbf{K}\mathbf{C}\mathbf{C}^\mathrm{H}\mathbf{K}^\mathrm{H}\mathbf{L}^\mathrm{H} \\
+                \nabla_{\mathbf{K}}h = \mathbf{L}^\mathrm{H}\left(\nabla_\mathbf{S}h\right)\mathbf{L}\mathbf{K}\mathbf{C}\mathbf{C}^\mathrm{H}
+            \end{align*}
+            \begin{align*}
+                \mathbf{R}_{\tilde{v}_i \tilde{v}_i} =
+                \underbrace{ \left( \mathbf{I}_i + \sum_{\substack{j=1 \\ j \neq i, k}}^K \mathbf{H}_i \mathbf{B}_j \mathbf{B}_j^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \right) }_{\mathbf{X} \textrm{ (constant)}} + \mathbf{H}_i \mathbf{B}_k \mathbf{I} \mathbf{B}_k^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \\
+                h = R_i\;,\;
+                \mathbf{S}= \mathbf{R}_{\tilde{v}_i\tilde{v}_i} \;,\;
+                \mathbf{L} = \mathbf{H}_i \;,\;
+                \mathbf{K} = \mathbf{B}_k \;,\;
+                \mathbf{C} = \mathbf{C}^\mathrm{H} = \mathbf{I}
+            \end{align*}
+        \end{column}
+    \end{columns}
+    \vspace{3ex}
+    \begin{equation}
+        \nabla_{\mathbf{B}_{k}}R_{i}=\mathbf{H}_i^{\mathrm{H}}\left(
+        \nabla_{\mathbf{R}_{\tilde{v}_i\tilde{v}_i}}R_{i}\right)\mathbf{H}_{i}\mathbf{B}_{k} \tag{15}
+    \end{equation}
+\end{frame}
+
+\begin{frame}{Derivation of Eq (17)}
+
+    \begin{columns}
+        \begin{column}{0.5\paperwidth}
+            \begin{align*}
+                 & \text{1. Definitions}                                                                                                                                                                                    \\
+                 & R_i = \log \det (\mathbf{K}_i)                                                                                                                                                                           \\
+                 & \mathbf{K}_i = \mathbf{I} + \mathbf{A}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{A}_i \quad (\mathrm{where } \mathbf{A}_i = \mathbf{H}_i \mathbf{B}_i)                               \\
+                 & \mathbf{E}_i = \mathbf{K}_i^{-1} \quad (\textrm{MMSE Matrix})                                                                                                                                            \\[1.2em]
+                 & \text{2. Differential of Log-Det (Chain Rule)}                                                                                                                                                           \\
+                 & d R_i = \mathrm{Tr}(\mathbf{K}_i^{-1} d\mathbf{K}_i) = \mathrm{Tr}(\mathbf{E}_i d\mathbf{K}_i)                                                                                                           \\[1.2em]
+                 & \text{3. Differential of Inverse Matrix}                                                                                                                                                                 \\
+                 & \textrm{Using } d(\mathbf{X}^{-1}) = -\mathbf{X}^{-1} (d\mathbf{X}) \mathbf{X}^{-1}:                                                                                                                     \\
+                 & d\mathbf{K}_i = \mathbf{A}_i^\mathrm{H} d(\mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1}) \mathbf{A}_i                                                                                                         \\
+                 & \phantom{d\mathbf{K}_i} = \mathbf{A}_i^\mathrm{H} \left( - \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} (d\mathbf{R}_{\tilde{v}_i\tilde{v}_i}) \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \right) \mathbf{A}_i \\[1.2em]
+            \end{align*}
+        \end{column}
+        \begin{column}{0.5\paperwidth}
+            \begin{align*}
+                 & \text{4. Substitution \& Trace Cyclic Property}                                                                                                                                                                                                                \\
+                 & d R_i = \mathrm{Tr}\left( \mathbf{E}_i \left[ - \mathbf{A}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} (d\mathbf{R}_{\tilde{v}_i\tilde{v}_i}) \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{A}_i \right] \right)                                  \\
+                 & \textrm{Move } (d\mathbf{R}_{\tilde{v}_i\tilde{v}_i}) \textrm{ to the end:}                                                                                                                                                                                    \\
+                 & d R_i = \mathrm{Tr}\left( \underbrace{ \left[ - \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{A}_i \mathbf{E}_i \mathbf{A}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \right] }_{\mathrm{Gradient}} d\mathbf{R}_{\tilde{v}_i\tilde{v}_i} \right) \\[1.2em]
+                 & \text{5. Obtain Eq (16)}                                                                                                                                                                                                                                       \\
+                 & \nabla_{\mathbf{R}_{\tilde{v}_i\tilde{v}_i}} R_i = - \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i \mathbf{B}_i^\mathrm{H} \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1}
+            \end{align*}
+        \end{column}
+    \end{columns}
+    \vspace{-7ex}
+\end{frame}
+
+\begin{frame}{Derivation of Eq (17)}
+    Combining Eq (15) and (16), we obtain Eq (17):
+    \vspace{2ex}
+
+    \begin{align}
+        \nabla_{\mathbf{R}_{\tilde{v}_i\tilde{v}_i}} R_i & = - \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i \mathbf{B}_i^\mathrm{H} \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \tag{16} \\
+        \nabla_{\mathbf{B}_{k}}R_{i}                     & =\mathbf{H}_i^{\mathrm{H}}\left(
+        \nabla_{\mathbf{R}_{\tilde{v}_i\tilde{v}_i}}R_{i}\right)\mathbf{H}_{i}\mathbf{B}_{k} \tag{15}                                                                                                                                            \\
+                                                         & =-\mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i
+        \mathbf{B}_i^\mathrm{H}
+        \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i\tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_k \tag{17}
+    \end{align}
+
+    \vspace{2ex}
+
+    \begin{flushright}
+        \hyperlink{main-wsr_Ri2}{\beamerreturnbutton{Return}}
+    \end{flushright}
+\end{frame}
+
+\begin{frame}[label=app-wmmse-grad1]{Derivation of Eq (20)}
+    \begin{columns}
+        \begin{column}{0.5\paperwidth}
+            \begin{equation*}
+                \mathbf{E}_k = \left(\mathbf{I}_k+\mathbf{B}_k^{\mathrm{H}}
+                \underbrace{
+                    \mathbf{H}_k^{\mathrm{H}} \mathbf{R}_{\tilde{v}_k \tilde{v}_k}^{-1} \mathbf{H}_k }_\mathbf{F}
+                \mathbf{B}_k\right)^{-1}
+            \end{equation*}
+
+            \begin{align*}
+                d\left(\mathbf{X}^{-1}\right) & =-\mathbf{X}^{-1}\left(d\mathbf{X}\right)\mathbf{X}^{-1},                                                                                 \\
+                d\left(\mathbf{E}_k\right)    & = -\mathbf{E}_k \left(d\mathbf{E}_k^{-1}\right)\mathbf{E}_k                                                                               \\
+                                              & = -\mathbf{E}_k \left(d
+                \left(
+                    \mathbf{I}_k+\mathbf{B}_k^{\mathrm{H}}
+                    \mathbf{F}
+                    \mathbf{B}_k
+                \right)\right)\mathbf{E}_k \;,                                                                                                                                            \\
+                                              & \quad d\left(\mathbf{B}_k^{\mathrm{H}} \mathbf{F} \mathbf{B}_k \right) = \left(d\mathbf{B}_k^{\mathrm{H}} \right) \mathbf{F} \mathbf{B}_k
+            \end{align*}
+        \end{column}
+        \begin{column}{0.5\paperwidth}
+            \begin{align*}
+                d\;\mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right)
+                 & = \mathrm{Tr}\left(\mathbf{W}_k \left(d\mathbf{E}_k\right)\right)                                                                                                                                                         \\
+                 & = \mathrm{Tr}\left(\mathbf{W}_k \left(-\mathbf{E}_k \left(d\mathbf{B}_k^{\mathrm{H}} \right)\mathbf{F}\mathbf{B}_k\mathbf{E}_k\right)\right)                                                                              \\
+                 & = -\mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k \left(d\mathbf{B}_k^{\mathrm{H}} \right) \mathbf{F} \mathbf{B}_k\mathbf{E}_k\right)                                                                                         \\
+                 & = -\mathrm{Tr}\left( \underbrace{\mathbf{F} \mathbf{B}_k\mathbf{E}_k\mathbf{W}_k \mathbf{E}_k}_{\nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right)} \left(d\mathbf{B}_k^{\mathrm{H}}  \right) \right)
+            \end{align*}
+        \end{column}
+    \end{columns}
+
+    \vspace{2ex}
+
+    \begin{equation}
+        \therefore
+        \nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_k \mathbf{E}_k\right)
+        = -\mathbf{H}_k^\mathrm{H} \mathbf{R}_{\tilde{v}_k\tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k \mathbf{E}_k\mathbf{W}_k \mathbf{E}_k
+        \tag{20}
+    \end{equation}
+
+    \begin{flushright}
+        \hyperlink{main-wmmse-grad}{\beamerreturnbutton{Return}}
+    \end{flushright}
+
+    \vspace{-8ex}
+\end{frame}
+
+\begin{frame}[label=app-wmmse-grad2]{Derivation of Eq (21)}
+    \begin{columns}
+        \begin{column}{0.45\paperwidth}
+            \begin{equation*}
+                \mathbf{E}_i = \left(\mathbf{I}_i+\mathbf{B}_i^{\mathrm{H}}
+                \mathbf{H}_i^{\mathrm{H}} \mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1} \mathbf{H}_i
+                \mathbf{B}_i\right)^{-1}
+            \end{equation*}
+            \hspace{1em}
+            $\mathbf{B}_k$is only  relevant with $\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}$
+            \begin{align*}
+                d\left(\mathbf{E}_i\right)
+                 & = -\mathbf{E}_i \left(d\mathbf{E}_i^{-1}\right)\mathbf{E}_i                                                                                                                                     \\
+                 & = -\mathbf{E}_i \left(d \left( \mathbf{I}_k+\mathbf{B}_i^{\mathrm{H}}  \mathbf{H}_i^{\mathrm{H}} \mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \right)\right)\mathbf{E}_i \\
+                 & = -\mathbf{E}_i \left(\mathbf{B}_i^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \left(d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}\right) \mathbf{H}_i \mathbf{B}_i \right)\mathbf{E}_i
+            \end{align*}
+            \begin{eqnarray*}
+                d\left(\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}\right) =-\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}\left(d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}\right)\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}
+            \end{eqnarray*}
+        \end{column}
+
+        \hspace{-20pt}
+        \begin{column}{0.55\paperwidth}
+            \begin{align*}
+                d\;\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i\right)
+                 & = \mathrm{Tr}\left(\mathbf{W}_i \left(d\mathbf{E}_i\right)\right)                                                                                                                                                                                                                                                                                                                          \\
+                 & = -\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i \mathbf{B}_i^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \left(d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}\right) \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i\right)                                                                                                                                                                                    \\
+                 & = -\mathrm{Tr}\left( \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i\mathbf{W}_i \mathbf{E}_i \mathbf{B}_i^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \left(d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}\right) \right)                                                                                                                                                                                   \\
+                 & = \mathrm{Tr}\left( \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i\mathbf{W}_i \mathbf{E}_i \mathbf{B}_i^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}\left(d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}\right)\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1} \right)                                                                                                       \\
+                 & = \mathrm{Tr}\left( \underbrace{\mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i\mathbf{W}_i \mathbf{E}_i \mathbf{B}_i^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1}}_{\nabla_{\mathbf{R}_{\tilde{v}_i \tilde{v}_i}} \mathrm{Tr}(\mathbf{W}_i \mathbf{E}_i)} \left(d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}\right) \right)
+            \end{align*}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Derivation of Eq (21)}
+    $\mathbf{R}_{\tilde{v}_i \tilde{v}_i}= \cdots +
+        \mathbf{H}_i\mathbf{B}_k
+        \mathbf{B}_k^\mathrm{H}\mathbf{H}_i^\mathrm{H} + \cdots$
+
+    \begin{equation*}
+        d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}= \mathbf{H}_i\mathbf{B}_k
+        \left(d\mathbf{B}_k^\mathrm{H}\right)
+        \mathbf{H}_i^\mathrm{H}
+    \end{equation*}
+
+    \begin{align*}
+        d\;\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i\right)
+         & = \mathrm{Tr}\left(
+        \alpha
+        \left(d\mathbf{R}_{\tilde{v}_i \tilde{v}_i}\right)
+        \right)                \\
+         & = \mathrm{Tr}\left(
+        \alpha
+        \mathbf{H}_i\mathbf{B}_k
+        \left(d\mathbf{B}_k^\mathrm{H}\right)
+        \mathbf{H}_i^\mathrm{H}
+        \right)                \\
+         & = \mathrm{Tr}\left(
+        \underbrace{
+            \mathbf{H}_i^\mathrm{H}
+            \alpha
+            \mathbf{H}_i\mathbf{B}_k
+        }_{\nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i\right)}
+        \left(d\mathbf{B}_k^\mathrm{H}\right)
+        \right)
+    \end{align*}
+
+
+    \begin{equation}
+        \nabla_{\mathbf{B}_k}\mathrm{Tr}\left(\mathbf{W}_i \mathbf{E}_i\right) = \mathbf{H}_i^\mathrm{H} \mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1} \mathbf{H}_i \mathbf{B}_i \mathbf{E}_i\mathbf{W}_i \mathbf{E}_i \mathbf{B}_i^{\mathrm{H}} \mathbf{H}_i^{\mathrm{H}} \mathbf{R}_{\tilde{v}_i \tilde{v}_i}^{-1} \mathbf{H}_i\mathbf{B}_k \tag{21}
+    \end{equation}
+
+    \begin{flushright}
+        \hyperlink{main-wmmse-grad}{\beamerreturnbutton{Return}}
+    \end{flushright}
+\end{frame}
+
+\end{document}

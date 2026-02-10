@@ -1,0 +1,28 @@
+.envrc
+
+*.pkl
+
+*.png
+
+**/__pycache__/
+
+## LaTeX 관련 보조 파일들 무시
+*.aux
+*.log
+*.toc
+*.out
+*.nav
+*.snm
+*.vrb
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.pdfsync
+*.xdv
+
+## _presentation 폴더 내의 결과물 및 빌드 파일 특정
+_presentation/*.aux
+_presentation/*.log
+_presentation/*.pdf
