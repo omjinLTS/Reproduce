@@ -20,10 +20,39 @@ class WMMSEBeamformer:
         self.B = self.power_scale(B_init)
         return self.B
 
+    def initialize_global_zfbf(self, H):
+        """
+        Global Zero-Forcing Beamforming (Channel Inversion)
+        모든 유저의 채널을 통째로 역행렬 연산하여 간섭 제거
+        조건: P >= K*Q
+        """
+        # 1. 전체 채널 행렬 하나로 합치기
+        # H_global shape: (K*Q, P) -> (Total_Rx, Tx)
+        H_global = np.vstack(H)
+        
+        # 2. 채널의 역행렬(Pseudo-Inverse) 계산
+        # 공식: B_global = H^H * (H H^H)^-1
+        try:
+            # (H H^H)는 (KQ, KQ) 크기
+            Inv_HH = np.linalg.inv(H_global @ H_global.conj().T)
+            B_global = H_global.conj().T @ Inv_HH # (P, KQ)
+        except np.linalg.LinAlgError:
+            # P < KQ 이거나 채널 상태가 나빠서 역행렬이 없으면 TxMF로 대체
+            B_global = H_global.conj().T
+
+        # 3. 유저별로 쪼개기 (Reshape & Transpose)
+        # (P, K*Q) -> (P, K, Q) -> (K, P, Q)
+        B_final = B_global.reshape(self.P, self.K, self.Q).transpose(1, 0, 2)
+        
+        # 4. Power Scaling
+        self.B = self.power_scale(B_final)
+        return self.B
+
     def initialize_zfbf(self, H):
         """ZFBF 초기화"""
         B_unscaled = np.zeros((self.K, self.P, self.Q), dtype=complex)
 
+        # for k in range(1): # User Selection
         for k in range(self.K):
             H_k = H[k]
             H_Hh = H_k @ H_k.conj().T
