@@ -15,12 +15,13 @@ class WMMSEBeamformer:
         return B_scaled
 
     def initialize_txmf(self, H):
-        """TxMF 초기화 (똑똑한 시작)"""
+        """TxMF 초기화"""
         B_init = H.conj().transpose(0, 2, 1)
         self.B = self.power_scale(B_init)
         return self.B
 
     def initialize_zfbf(self, H):
+        """ZFBF 초기화"""
         B_unscaled = np.zeros((self.K, self.P, self.Q), dtype=complex)
 
         for k in range(self.K):
@@ -32,7 +33,7 @@ class WMMSEBeamformer:
         return self.B
 
     def initialize_random(self):
-        """Random 초기화 (무작위 시작)"""
+        """Random 초기화"""
         # 랜덤한 복소수 행렬 생성
         B_rand = np.random.randn(self.K, self.P, self.Q) + \
             1j * np.random.randn(self.K, self.P, self.Q)
