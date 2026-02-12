@@ -1,6 +1,7 @@
 % !TeX program = xelatex
 % !TeX encoding = UTF-8
 \documentclass[aspectratio=169, 10pt]{beamer}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 
 \usetheme{AICL} 
 
@@ -351,50 +352,139 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
 
 \begin{frame}{Proposed Algorithm: WSRBF-WMMSE}
 
+    \begin{algorithm}[H]
+        \DontPrintSemicolon % 문장 끝 세미콜론(;) 제거
+        \SetAlgoNoLine      % 수직선 제거 (이미지처럼 텍스트만 깔끔하게)
+
+        % 초기화 단계
+        Set $n=0$\;
+        Set $\mathbf{B}_k^n = \mathbf{B}_k^{\mathrm{init}} \forall k$\;
+
+        \vspace{0.2cm} % 가독성을 위한 약간의 여백
+
+        % While 루프 시작
+        \While{not converged}{
+        update $n \leftarrow n+1$\;
+        \vspace{0.1cm}
+        I. compute $\mathbf{A}_k^n \mid \mathbf{B}_i^{n-1} \forall i$ for all $k$ using (7)\;
+        II. compute $\mathbf{W}_k^n \mid \mathbf{B}_i^{n-1} \forall i$ for all $k$ using (22),(8)\;
+        III. compute $\mathbf{B}^n \mid \mathbf{A}^n, \mathbf{W}^n$ using (23),(24)\;
+        }
+
+        \caption{WSRBF-WMMSE Algorithm}
+    \end{algorithm}
+
+\end{frame}
+
+\begin{frame}[label=main-update_B]{Proposed Algorithm: WSRBF-WMMSE}
+    The WMMSE transmit filter structure is computed as:
+
+    \begin{equation}
+        \bar{\mathbf{B}}
+        = \left(
+        \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} \mathbf{A} \mathbf{H}
+        + \frac{\mathrm{Tr}\left(\mathbf{W} \mathbf{A} \mathbf{A}^\mathrm{H}\right)}{E_{tx}}\mathbf{I}_P
+        \right)^{-1}\mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W}
+        , \tag{23}
+    \end{equation}
+    \begin{flushright}
+        \hyperlink{app-update_B}{\beamergotobutton{Derivation}}
+    \end{flushright}
+
+    \begin{itemize}
+        \item $\mathbf{W}_{\left[QK\times QK\right]} = \operatorname{diag}\left\{\mathbf{W}_1,  \cdots, \mathbf{W}_K\right\}$
+        \item $\mathbf{A}_{\left[QK\times QK\right]} = \operatorname{diag}\left\{\mathbf{A}_1,  \cdots, \mathbf{A}_K\right\}$
+        \item $\mathbf{H}_{\left[QK\times P\right]} = \left[\mathbf{H}_1^\mathrm{T}, \cdots, \mathbf{H}_K^\mathrm{T}\right]^\mathrm{T}$
+              : contains channel matrices stacked row-wise
+    \end{itemize}
+\end{frame}
+
+% --- [Explanation Frame] ---
+\begin{frame}{Proposed Algorithm: WSRBF-WMMSE}
+    % \textbf{Interpretation of the Transmit Filter Structure:}
+
+    % The structure of $\bar{\mathbf{B}}$ resembles a \textbf{Regularized Zero-Forcing} (or Wiener) solution.
+
+    \begin{equation*}
+        \bar{\mathbf{B}} = \left( \underbrace{\mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} \mathbf{A} \mathbf{H}}_{\text{Signal Direction}} + \underbrace{\frac{\mathrm{Tr}(\mathbf{W} \mathbf{A} \mathbf{A}^\mathrm{H})}{E_{tx}} \mathbf{I}_P}_{\text{Regularization Term}} \right)^{-1} \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W}
+    \end{equation*}
+
+
+    \begin{itemize}
+        \item \textbf{Regularization Term ($\mu \mathbf{I}_P$):}
+              \begin{itemize}
+                  \item The scalar factor $\mu = \frac{\mathrm{Tr}(\mathbf{W} \mathbf{A} \mathbf{A}^\mathrm{H})}{E_{tx}}$ acts as a noise-to-signal ratio.
+                  \item Unlike standard ZFBF, this term prevents noise amplification when the channel is ill-conditioned.
+              \end{itemize}
+              \vspace{1ex}
+        \item \textbf{Behavior at Extremes:}
+              \begin{itemize}
+                  \item \textbf{High SNR ($E_{tx} \to \infty$):} $\mu \to 0$, behaves like \textbf{Zero-Forcing (ZFBF)}.
+                  \item \textbf{Low SNR ($E_{tx} \to 0$):} $\mu$ dominates, behaves like \textbf{Matched Filter (TxMF)}.
+              \end{itemize}
+    \end{itemize}
 \end{frame}
 
 % ---------------------------------------------------------------------------- %
 %                             section 5: Simulation                            %
 % ---------------------------------------------------------------------------- %
 \section{V. Simulation}
-% \OnlyTitle
-\begin{frame}{Simulation Setup}
-    \begin{enumerate}
-        \item Proposed a conflict-aware traffic steering xApp using MADRL.
-        \item Defined a joint reward function for throughput and load balancing.
-        \item Validated performance via NS-3 simulation result.
-    \end{enumerate}
+\OnlyTitle
+\begin{frame}{\insertsectionhead}
+    \begin{block}{Reproduce Setup}
+
+        \begin{itemize}
+            \setlength{\itemsep}{1em}
+            \item $\mathbf{H}_k$ : Rayleigh fading channel with path loss
+            \item For all users, $u_{R_k} = 1$
+            \item For matched filter (TxMF), $\mathbf{B}_k = \beta \mathbf{H}_k^\mathrm{H}$
+            \item For zero-forcing beamforming (ZFBF), $\mathbf{B} = \beta \mathbf{H}^\mathrm{H}(\mathbf{H}\mathbf{H}^\mathrm{H})^{-1}$
+            \item w/ Python, NumPy
+        \end{itemize}
+    \end{block}
 
 \end{frame}
 
-\begin{frame}{Result}
-    Simulation setup based on \textbf{NS-3} with O-RAN extension.
-
-    \vspace{0.3cm}
+\begin{frame}{Reprocude Simulation Result}
     \centering
-    % 이미지 2개를 나란히 배치하는 예시
     \begin{columns}
-        \begin{column}{0.48\textwidth}
+        % --- Left Column: Plot ---
+        \begin{column}{0.45\textwidth} % 그래프를 좀 더 크게 확보
             \centering
-            \includegraphics[width=\textwidth, height=4cm]{example-image-c}
-            \\ \small (a) Average Throughput
+            % height 대신 width=\linewidth를 쓰면 컬럼 폭에 맞춰짐
+            \includegraphics[width=\linewidth]{../Sum-Rate_Performance_(P4_K4_Q1).png}
+            \vspace{0.2cm}
+            \tiny{Simulation Parameters: $P=4, K=4, Q=1$}
         \end{column}
-        \begin{column}{0.48\textwidth}
-            \centering
-            \includegraphics[width=\textwidth, height=4cm]{example-image-c}
-            \\ \small (b) Handover Frequency
+
+        % --- Right Column: Interpretation ---
+        \begin{column}{0.55\textwidth}
+            \begin{block}{Performance Analysis:}
+
+                \begin{itemize}
+                    \footnotesize
+                    \setlength{\itemsep}{1em}
+                    \item \textbf{Baseline Comparison:}
+                          TxMF and ZFBF are interference-limited (saturation) at high SNR.
+
+                    \item \textbf{WSRBF-WMMSE Success:}
+                          Shows linear growth w.r.t. SNR, indicating effective \textbf{interference management}.
+
+                    \item \textbf{Initialization Impact:}
+                          \textbf{WMMSE2} (TxMF Init + 10 iter) captures most of the gain of \textbf{WMMSE1} (Random Init + Convergence), verifying the low-complexity advantage.
+
+                    \item \textbf{Role of Weights ($\mathbf{W}$):}
+                          The weight update acts as a \textbf{soft user selection}, nulling out users with poor channel compatibility to maximize sum-rate.
+                \end{itemize}
+            \end{block}
+
+            \begin{flushright}
+                \scriptsize
+                \alert{\href{https://github.com/omjinLTS/Reproduce}{Code is available on GitHub}}
+            \end{flushright}
         \end{column}
     \end{columns}
 
-    \vspace{0.5cm}
-    \begin{itemize}
-        \item Proposed method achieves \textbf{24\% gain} over heuristic baseline.
-        \item Handover frequency is reduced by stabilizing the policy.
-    \end{itemize}
-
-    \alert{
-        \href{https://github.com/omjinLTS/Reproduce}{Code is available on GitHub}
-    }
 \end{frame}
 
 \section{}
@@ -817,6 +907,64 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
 
     \begin{flushright}
         \hyperlink{main-wmmse-grad}{\beamerreturnbutton{Return}}
+    \end{flushright}
+\end{frame}
+
+% \begin{frame}[label=app-update_B]{Derivation of Eq (23)}
+
+
+%     \begin{flushright}
+%         \hyperlink{main-update_B}{\beamerreturnbutton{Return}}
+%     \end{flushright}
+% \end{frame}
+
+% --- [Appendix Frame] ---
+\begin{frame}[label=app-update_B]{Derivation of Eq (23)}
+    \footnotesize % 수식이 많으므로 폰트 크기 조정
+    \textbf{Problem Formulation:}
+    Minimize the Weighted MSE subject to the transmit power constraint $E_{tx}$.
+    Let $\mathbf{B} = b \bar{\mathbf{B}}$, where $b$ is a scaling factor.
+
+    \begin{align*}
+        \min_{\bar{\mathbf{B}}, b} \quad & J = \mathbb{E} \left[ \left\| \mathbf{W}^{1/2} (\mathbf{s} - b^{-1} \mathbf{A} \mathbf{y}) \right\|^2 \right]        \\
+        \text{s.t.} \quad                & \mathrm{Tr}(\mathbf{B}\mathbf{B}^\mathrm{H}) = b^2 \mathrm{Tr}(\bar{\mathbf{B}}\bar{\mathbf{B}}^\mathrm{H}) = E_{tx}
+    \end{align*}
+
+    \textbf{Step 1: Constraint Substitution} \\
+    From the constraint, we substitute the scaling factor $b$:
+    \begin{equation*}
+        b^{-2} = \frac{\mathrm{Tr}(\bar{\mathbf{B}}\bar{\mathbf{B}}^\mathrm{H})}{E_{tx}}
+    \end{equation*}
+
+    \textbf{Step 2: Cost Function Expansion} \\
+    Substituting $\mathbf{y} = \mathbf{H} b \bar{\mathbf{B}} \mathbf{s} + \mathbf{n}$ and $b^{-2}$ into the cost function $J$:
+    \begin{align*}
+        J(\bar{\mathbf{B}}) & = \mathrm{Tr} \left( \mathbf{W} (\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})(\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})^\mathrm{H} \right) + b^{-2} \mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})                                                                                                       \\
+                            & = \underbrace{\mathrm{Tr} \left( \mathbf{W} (\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})(\dots)^\mathrm{H} \right)}_{\text{Error Term}} + \underbrace{\frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathrm{Tr}(\bar{\mathbf{B}}\bar{\mathbf{B}}^\mathrm{H})}_{\text{Penalty Term (from Noise)}}
+    \end{align*}
+\end{frame}
+
+\begin{frame}{Derivation of Eq (23)}
+    \footnotesize
+    \textbf{Step 3: Complex Gradient} \\
+    Taking the gradient with respect to $\bar{\mathbf{B}}^*$ and setting it to zero:
+    \begin{equation*}
+        \frac{\partial J}{\partial \bar{\mathbf{B}}^*} = -\mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} + \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} \mathbf{A} \mathbf{H} \bar{\mathbf{B}} + \underbrace{\frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathbf{I}_P}_{\text{Regularization}} \bar{\mathbf{B}} = 0
+    \end{equation*}
+
+    \textbf{Step 4: Solution} \\
+    Rearranging the terms to solve for $\bar{\mathbf{B}}$:
+    \begin{equation*}
+        \left( \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} \mathbf{A} \mathbf{H} + \frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathbf{I}_P \right) \bar{\mathbf{B}} = \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W}
+    \end{equation*}
+
+    Finally, we obtain the structure in (23):
+    \begin{equation*}
+        \bar{\mathbf{B}} = \left( \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} \mathbf{A} \mathbf{H} + \frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathbf{I}_P \right)^{-1} \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W}
+    \end{equation*}
+
+    \begin{flushright}
+        \hyperlink{main-update_B}{\beamergotobutton{Back to Main Slide}}
     \end{flushright}
 \end{frame}
 
