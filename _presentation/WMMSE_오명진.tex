@@ -37,14 +37,14 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
         \setlength{\itemsep}{1.5em}
         \item For MIMO-BC, non-linear techniques outperform linear ones.
               \begin{itemize}
-                  \item However, they are complex for voth Tx and Rx.
+                  \item However, they are complex for both Tx and Rx.
               \end{itemize}
 
-        \item Focus on Tx Beamforming design to \textbf{Maximize Weithted Sum-Rate (WSR)}.
+        \item Focus on Tx Beamforming design to \textbf{Maximize Weighted Sum-Rate (WSR)}.
               \begin{itemize}
                   \item WSR maximization is non-convex and non-trivial.
               \end{itemize}
-        \item Estabilish a relationship between WSR maximization and \\
+        \item Establish a relationship between WSR maximization and \\
               \textbf{Weighted Minimum Mean Square Error (WMMSE)} minimization.
         \item Propose an iterative algorithm to solve WSR maximization via WMMSE minimization.
     \end{itemize}
@@ -57,7 +57,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
 \section{II. System Model and Objective}
 
 \begin{frame}{System Model}
-    General narrowband point-to-multipoint MIMO system.
+    General narrow band point-to-multipoint MIMO system.
 
     \begin{itemize}
         \item $P$ transmit antennas
@@ -86,7 +86,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
         \mathbf{x}(n) = \sum_{k=1}^K \mathbf{B}_k \mathbf{d}_k(n). \tag{2}
     \end{equation}
 
-    Matricies $\mathbf{B}_1, \cdots , \mathbf{B}_K \in \mathbb{C}^{[P\times Q]}$
+    Matrices $\mathbf{B}_1, \cdots , \mathbf{B}_K \in \mathbb{C}^{[P\times Q]}$
     : transmit filters(Beamformers). Assumed
     \begin{itemize}
         \item each user has $Q$ parallel data streams.
@@ -139,7 +139,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
 \end{frame}
 
 \begin{frame}[label=main-mmse_rx_filter]{A. Main Objective}
-    The MMSE recieve filter at user $k$ is given by
+    The MMSE receive filter at user $k$ is given by
     \begin{align}
         \mathbf{A}_k^{\mathrm{MMSE}}
          & =\underset{\mathbf{A}_k}{\arg \min }\;
@@ -150,7 +150,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
         \hyperlink{app-mmse_rx_filter_7}{\beamergotobutton{Derivation}}
     \end{flushright}
 
-    MSE Matrix for user $k$ given at the MMSE-recieve filter
+    MSE Matrix for user $k$ given at the MMSE-receive filter
     \begin{align}
         \mathbf{E}_k & =\mathbb{E}\left[\left(\mathbf{A}_k^{\mathrm{MMSE}} \mathbf{y}_k-\mathbf{d}_k\right)\left(\mathbf{A}_k^{\mathrm{MMSE}} \mathbf{y}_k-\mathbf{d}_k\right)^{\mathrm{H}}\right] \notag \\
                      & =\left(\mathbf{I}_k+\mathbf{B}_k^{\mathrm{H}} \mathbf{H}_k^{\mathrm{H}} \mathbf{R}_{\tilde{v}_k \tilde{v}_k}^{-1} \mathbf{H}_k \mathbf{B}_k\right)^{-1}  \tag{8}
@@ -453,7 +453,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
         \end{aligned}
     \end{equation*}
 
-    Let Corellation $\mathbf{R}_{yy} = \mathbb{E}\left[\mathbf{y}_k \mathbf{y}_k^\mathrm{H}\right]$,
+    Let Correlation $\mathbf{R}_{yy} = \mathbb{E}\left[\mathbf{y}_k \mathbf{y}_k^\mathrm{H}\right]$,
     $\mathbf{R}_{dy} = \mathbb{E}\left[\mathbf{d}_k \mathbf{y}_k^\mathrm{H}\right]$,
     $\mathbf{R}_{yd} = \mathbb{E}\left[\mathbf{y}_k \mathbf{d}_k^\mathrm{H}\right] = \mathbf{R}_{dy}^\mathrm{H}$
 
