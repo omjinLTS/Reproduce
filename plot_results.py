@@ -1,3 +1,4 @@
+import argparse
 import glob
 import os
 import sys
@@ -5,14 +6,32 @@ from modules import load_simulation_data, plot_simulation_results
 
 
 def main():
-    list_of_files = glob.glob('results_*.pkl')
+    parser = argparse.ArgumentParser(description="결과 pkl 파일을 시각화합니다.")
+    parser.add_argument(
+        "--file",
+        "-f",
+        type=str,
+        default=None,
+        help="사용할 pkl 파일 경로 (생략하면 최신 파일 자동 선택)"
+    )
+    args = parser.parse_args()
 
-    if not list_of_files:
-        print("❌ Error: 저장된 결과 파일(*.pkl)을 찾을 수 없습니다.")
-        print("   먼저 'run_simulation.py'를 실행해서 데이터를 생성해주세요.")
-        sys.exit()
+    # 사용할 파일 결정
+    if args.file:
+        target_file = args.file
+        if not os.path.exists(target_file):
+            print(f"❌ Error: 파일을 찾을 수 없습니다: {target_file}")
+            sys.exit(1)
+    else:
+        list_of_files = glob.glob('results_*.pkl')
 
-    target_file = max(list_of_files, key=os.path.getctime)
+        if not list_of_files:
+            print("❌ Error: 저장된 결과 파일(*.pkl)을 찾을 수 없습니다.")
+            print("   먼저 'run_simulation.py'를 실행해서 데이터를 생성해주세요.")
+            sys.exit(1)
+
+        target_file = max(list_of_files, key=os.path.getctime)
+
     print(f"📂 데이터 파일 로드 중: {target_file}")
 
     results, params = load_simulation_data(target_file)
