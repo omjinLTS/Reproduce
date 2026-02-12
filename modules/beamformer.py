@@ -1,12 +1,13 @@
 import numpy as np
 from scipy.linalg import block_diag
 
+
 class WMMSEBeamformer:
     def __init__(self, P, K, Q, E_tx):
-        self.P = P 
-        self.K = K  
-        self.Q = Q  
-        self.E_tx = E_tx 
+        self.P = P
+        self.K = K
+        self.Q = Q
+        self.E_tx = E_tx
         self.B, self.W, self.A = None, None, None
 
     def power_scale(self, B_raw):
@@ -19,14 +20,25 @@ class WMMSEBeamformer:
         self.B = self.power_scale(B_init)
         return self.B
 
+    def initialize_zfbf(self, H):
+        B_unscaled = np.zeros((self.K, self.P, self.Q), dtype=complex)
+
+        for k in range(self.K):
+            H_k = H[k]
+            H_Hh = H_k @ H_k.conj().T
+            Inv_H_Hh = np.linalg.inv(H_Hh)
+            B_unscaled[k] = H_k.conj().T @ Inv_H_Hh
+        self.B = self.power_scale(B_unscaled)
+        return self.B
+
     def initialize_random(self):
         """Random 초기화 (무작위 시작)"""
         # 랜덤한 복소수 행렬 생성
         B_rand = np.random.randn(self.K, self.P, self.Q) + \
-                 1j * np.random.randn(self.K, self.P, self.Q)
+            1j * np.random.randn(self.K, self.P, self.Q)
         self.B = self.power_scale(B_rand)
         return self.B
-    
+
     def update(self, H):
         # Update A_k for each user k
         self.A = np.zeros((self.K, self.Q, self.Q), dtype=complex)
@@ -39,7 +51,7 @@ class WMMSEBeamformer:
                 Rx_cov += H_kB_i @ H_kB_i.conj().T
 
             self.A[k] = B_k.conj().T @ H_k.conj().T @ np.linalg.inv(Rx_cov)
-            
+
         # Update W_k for each user k
         self.W = np.zeros((self.K, self.Q, self.Q), dtype=complex)
         for k in range(self.K):
@@ -50,13 +62,13 @@ class WMMSEBeamformer:
         H_global = np.vstack(H)
         A_global = block_diag(*self.A)
         W_global = block_diag(*self.W)
-        
+
         mu = np.trace(W_global @ A_global @ A_global.conj().T).real / self.E_tx
 
         AH = A_global @ H_global
         B_new_global = AH.conj().T @ W_global @ AH + mu * np.eye(self.P, dtype=complex)
         B_new_global = np.linalg.inv(B_new_global) @ (AH.conj().T @ W_global)
-        
+
         B_new = B_new_global.reshape(self.P, self.K, self.Q).transpose(1, 0, 2)
         self.B = self.power_scale(B_new)
 
