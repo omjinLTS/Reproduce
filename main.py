@@ -12,7 +12,7 @@ from joblib import Parallel, delayed  # 핵심 라이브러리
 
 def run_single_iteration(snr_db, P, K, Q, E_TX, MAX_ITER):
     """
-    몬테카를로 1회 시행에 대한 로직을 여기 다 넣습니다.
+    몬테카를로 1회 시행에 대한 로직
     반환값: (rate_txmf, rate_wmmse1, rate_wmmse2) 튜플
     """
     # 1. 독립적인 Solver 객체 생성 (프로세스 충돌 방지)
@@ -74,20 +74,16 @@ if __name__ == "__main__":  # 윈도우/리눅스 멀티프로세싱 필수 구�
     print(f"🚀 Simulation Start (Parallel): P={p.P}, K={p.K}, Q={p.Q}")
     print(f"   Using ALL Available CPU Cores...")
 
-    # SNR 루프는 순차적으로 돌립니다 (진행상황 보려고)
+    # SNR 루프는 순차적으로
     for snr_db in tqdm(p.SNR_DB_RANGE, desc="SNR Loop"):
 
-        # ★ 핵심: joblib을 이용한 병렬 처리 ★
-        # n_jobs=-1 : 가능한 모든 CPU 코어 사용
-        # delayed(함수)(인자) : 함수를 지연 실행 모드로 포장
         parallel_results = Parallel(n_jobs=-1)(
             delayed(run_single_iteration)(
                 snr_db, p.P, p.K, p.Q, p.E_TX, p.MAX_ITERATIONS
             ) for _ in range(p.MONTE_CARLO_RUNS)
         )
 
-        # 결과 정리 (List of Tuples -> Tuple of Lists)
-        # parallel_results는 [(r1, r2, r3), (r1, r2, r3), ...] 형태임
+        # parallel_results는 [(r1, r2, r3), (r1, r2, r3), ...] 형태
         r_txmf_list, r_wmmse1_list, r_wmmse2_list, r_zfbf_list = zip(*parallel_results)
 
         # 평균 계산 및 저장
