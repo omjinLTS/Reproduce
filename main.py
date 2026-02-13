@@ -27,8 +27,8 @@ def run_single_iteration(snr_db, P, K, Q, E_TX, MAX_ITER):
     B_zfbf = solver.initialize_zfbf(H)
     r_zfbf = calculate_sum_rate(H, B_zfbf)
 
-    # B_global_zfbf = solver.initialize_global_zfbf(H)
-    # r_global_zfbf = calculate_sum_rate(H, B_global_zfbf)
+    B_global_zfbf = solver.initialize_global_zfbf(H)
+    r_global_zfbf = calculate_sum_rate(H, B_global_zfbf)
 
     # ------------------- Curve 3: WMMSE2 (TxMF Init + 10 Iter) ------------------ #
     solver.B = B_txmf.copy()
@@ -56,8 +56,8 @@ def run_single_iteration(snr_db, P, K, Q, E_TX, MAX_ITER):
 
     r_wmmse1 = best_rate
 
-    # return r_txmf, r_wmmse1, r_wmmse2, r_zfbf, r_global_zfbf
-    return r_txmf, r_wmmse1, r_wmmse2, r_zfbf
+    return r_txmf, r_wmmse1, r_wmmse2, r_zfbf, r_global_zfbf
+    # return r_txmf, r_wmmse1, r_wmmse2, r_zfbf
 
 
 # --- Main 실행 부분 ---
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     results = {
         "TxMF": [],
         "ZFBF": [],
-        # "Global ZFBF": [],
+        "Global ZFBF": [],
         "WSRBF-WMMSE1 (convergence/10 random init)": [],
         "WSRBF-WMMSE2 (10 iterations - TxMF)": []
     }
@@ -86,13 +86,13 @@ if __name__ == "__main__":
             ) for _ in range(p.MONTE_CARLO_RUNS)
         )
 
-        # r_txmf_list, r_wmmse1_list, r_wmmse2_list, r_zfbf_list, r_global_zfbf_list = zip(*parallel_results)
-        r_txmf_list, r_wmmse1_list, r_wmmse2_list, r_zfbf_list = zip(*parallel_results)
+        r_txmf_list, r_wmmse1_list, r_wmmse2_list, r_zfbf_list, r_global_zfbf_list = zip(*parallel_results)
+        # r_txmf_list, r_wmmse1_list, r_wmmse2_list, r_zfbf_list = zip(*parallel_results)
 
         # 평균 계산 및 저장
         results["TxMF"].append(np.mean(r_txmf_list))
         results["ZFBF"].append(np.mean(r_zfbf_list))
-        # results["Global ZFBF"].append(np.mean(r_global_zfbf_list))
+        results["Global ZFBF"].append(np.mean(r_global_zfbf_list))
         results["WSRBF-WMMSE1 (convergence/10 random init)"].append(
             np.mean(r_wmmse1_list))
         results["WSRBF-WMMSE2 (10 iterations - TxMF)"].append(np.mean(r_wmmse2_list))
