@@ -2,6 +2,8 @@
 % !TeX encoding = UTF-8
 \documentclass[aspectratio=169, 10pt]{beamer}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=NoCommon} 
 
 \usetheme{AICL} 
 
@@ -103,7 +105,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
         \frac{1}{N} \sum_{n=1}^N \mathbf{x}^\mathrm{H}(n) \mathbf{x}(n) \le E_{tx} \tag{3}
     \end{equation}
 
-    If $N$ is large enough, then
+    I{}f $N$ is large enough, then
     \begin{equation}
         \frac{1}{N} \sum_{n=1}^N \mathbf{x}^\mathrm{H}(n) \mathbf{x}(n) \rightarrow
         \mathbb{E}[\mathbf{x}^\mathrm{H}(n)\mathbf{x}(n)] =
@@ -324,7 +326,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
     \textbf{Key Insight:} The two problems are closely related through the MSE weights.
 
     \begin{itemize}
-        \item If we select the MSE weights as:
+        \item I{}f we select the MSE weights as:
               \begin{equation*}
                   \mathbf{W}_k = u_k \mathbf{E}_k^{-1}
               \end{equation*}
