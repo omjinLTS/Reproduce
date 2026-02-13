@@ -1,0 +1,34 @@
+name: Update Branch List
+on:
+  create: # 새 브랜치가 생성될 때 트리거
+  delete: # 브랜치가 삭제될 때 트리거
+  push:
+    branches:
+      - main
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main # main 브랜치를 가져옴
+
+      - name: Update README with branches
+        run: |
+          echo "# Paper Reproduction Archive" > README.md
+          echo "" >> README.md
+          echo "## Currently Reproduced Papers (Branches)" >> README.md
+
+          # 원격 브랜치 리스트를 가져와서 링크로 만듦 (HEAD와 main 제외)
+          git ls-remote --heads origin | awk '{print $2}' | sed 's/refs\/heads\///' | grep -v 'main' | while read branch; do
+            echo "- [$branch](https://github.com/${{ github.repository }}/tree/$branch)" >> README.md
+          done
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add README.md
+          # 변경사항이 있을 때만 커밋
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update branch list" && git push)
