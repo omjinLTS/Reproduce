@@ -26,4 +26,4 @@
 ## _presentation 폴더 내의 결과물 및 빌드 파일 특정
 _presentation/*.aux
 _presentation/*.log
-_presentation/*.pdf
+# _presentation/*.pdf
