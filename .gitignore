@@ -1,8 +1,8 @@
-.envrc
+# .envrc
 
 *.pkl
 
-*.png
+# *.png
 
 **/__pycache__/
 
