@@ -321,7 +321,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
     \end{equation*}
 \end{frame}
 
-\begin{frame}{C. Compare $\nabla_{\mathbf{B}_k} \text{WSR}$ and $\nabla_{\mathbf{B}_k} \text{WMMSE}$}
+\begin{frame}{C. Compare $\nabla_{\mathbf{B}_k} \mathrm{WSR}$ and $\nabla_{\mathbf{B}_k} \mathrm{WMMSE}$}
 
     \textbf{Key Insight:} The two problems are closely related through the MSE weights.
 
@@ -333,7 +333,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
 
         \item Then, the gradients become identical:
               \begin{equation*}
-                  \nabla_{\mathbf{B}_k} \text{WSR} = \nabla_{\mathbf{B}_k} \text{WMMSE}
+                  \nabla_{\mathbf{B}_k} \mathrm{WSR} = \nabla_{\mathbf{B}_k} \mathrm{WMMSE}
               \end{equation*}
     \end{itemize}
 
@@ -941,8 +941,8 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
     \textbf{Step 2: Cost Function Expansion} \\
     Substituting $\mathbf{y} = \mathbf{H} b \bar{\mathbf{B}} \mathbf{s} + \mathbf{n}$ and $b^{-2}$ into the cost function $J$:
     \begin{align*}
-        J(\bar{\mathbf{B}}) & = \mathrm{Tr} \left( \mathbf{W} (\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})(\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})^\mathrm{H} \right) + b^{-2} \mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})                                                                                                       \\
-                            & = \underbrace{\mathrm{Tr} \left( \mathbf{W} (\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})(\dots)^\mathrm{H} \right)}_{\text{Error Term}} + \underbrace{\frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathrm{Tr}(\bar{\mathbf{B}}\bar{\mathbf{B}}^\mathrm{H})}_{\text{Penalty Term (from Noise)}}
+        J(\bar{\mathbf{B}}) & = \mathrm{Tr} \left( \mathbf{W} (\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})(\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})^\mathrm{H} \right) + b^{-2} \mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})                                                                                                           \\
+                            & = \underbrace{\mathrm{Tr} \left( \mathbf{W} (\mathbf{I} - \mathbf{A}\mathbf{H}\bar{\mathbf{B}})(\dots)^\mathrm{H} \right)}_{\mathrm{Error Term}} + \underbrace{\frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathrm{Tr}(\bar{\mathbf{B}}\bar{\mathbf{B}}^\mathrm{H})}_{\mathrm{Penalty Term (from Noise)}}
     \end{align*}
 \end{frame}
 
@@ -951,7 +951,7 @@ using Weighted MMSE for MIMO-BC Beamforming Design}
     \textbf{Step 3: Complex Gradient} \\
     Taking the gradient with respect to $\bar{\mathbf{B}}^*$ and setting it to zero:
     \begin{equation*}
-        \frac{\partial J}{\partial \bar{\mathbf{B}}^*} = -\mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} + \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} \mathbf{A} \mathbf{H} \bar{\mathbf{B}} + \underbrace{\frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathbf{I}_P}_{\text{Regularization}} \bar{\mathbf{B}} = 0
+        \frac{\partial J}{\partial \bar{\mathbf{B}}^*} = -\mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} + \mathbf{H}^\mathrm{H} \mathbf{A}^\mathrm{H} \mathbf{W} \mathbf{A} \mathbf{H} \bar{\mathbf{B}} + \underbrace{\frac{\mathrm{Tr}(\mathbf{W}\mathbf{A}\mathbf{A}^\mathrm{H})}{E_{tx}} \mathbf{I}_P}_{\mathrm{Regularization}} \bar{\mathbf{B}} = 0
     \end{equation*}
 
     \textbf{Step 4: Solution} \\
